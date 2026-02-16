@@ -1,16 +1,16 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Form
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import EmailStr
 from typing import Dict
 from datetime import timedelta
 
-from ....core.security import get_password_hash, verify_password, create_access_token
-from ....core.config import settings
-from ....dependencies import get_current_tenant, get_db_session
-from ....models.base import get_db
-from ....models import User, Tenant
-from ....repositories import UserRepository, TenantRepository
-from ....schemas.user import UserCreate, UserOut
+from ...core.security import get_password_hash, verify_password, create_access_token
+from ...core.config import settings
+from ...dependencies import get_current_tenant, get_db_session
+from ...models import get_db, User, Tenant
+from ...repositories import UserRepository
+from ...schemas.user import UserCreate, UserOut
 
 router = APIRouter()
 
@@ -53,23 +53,35 @@ async def register_tenant(
 
 @router.post("/login", response_model=Dict)
 async def login(
-    email: EmailStr,
-    password: str,
+    username: str = Form(),  # Form data
+    password: str = Form(),  # Form data
     db: AsyncSession = Depends(get_db)
 ):
-    user_repo = UserRepository(db)
-    user = await user_repo.get_by_email(email)
-    
-    if not user or not verify_password(password, user.hashed_password):
+    try:
+        user_repo = UserRepository(db)
+        user = await user_repo.get_by_email(username)  # username es el email
+        
+        if not user or not verify_password(password, user.hashed_password):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect email or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        token = create_access_token({"user_id": user.id, "tenant_id": user.tenant_id})
+        
+        return {
+            "access_token": token,
+            "token_type": "bearer",
+            "tenant_id": user.tenant_id
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        print(f"ERROR EN LOGIN: {str(e)}")
+        print(traceback.format_exc())
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error interno: {str(e)}"
         )
-    
-    token = create_access_token({"user_id": user.id, "tenant_id": user.tenant_id})
-    
-    return {
-        "access_token": token,
-        "token_type": "bearer",
-        "tenant_id": user.tenant_id
-    }

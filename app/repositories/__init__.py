@@ -1,22 +1,22 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
-from sqlalchemy import and_
-from ..models import User, Tenant
+from .base_repository import BaseRepository
+from .product_repo import ProductRepository
+from .category_repo import CategoryRepository
+from .supplier_repo import SupplierRepository
+from .inventory_movement_repo import InventoryMovementRepository
+from .stock_alert_repo import StockAlertRepository
 
-class BaseRepository:
-    def __init__(self, db: AsyncSession):
-        self.db = db
+# Mantener UserRepository si existe
+try:
+    from .user_repo import UserRepository
+except ImportError:
+    UserRepository = None
 
-class UserRepository(BaseRepository):
-    async def get_by_email(self, email: str) -> User | None:
-        result = await self.db.execute(select(User).where(User.email == email))
-        return result.scalar_one_or_none()
-
-    async def get_by_id(self, user_id: int) -> User | None:
-        result = await self.db.execute(select(User).where(User.id == user_id))
-        return result.scalar_one_or_none()
-
-class TenantRepository(BaseRepository):
-    async def get_by_id(self, tenant_id: int) -> Tenant | None:
-        result = await self.db.execute(select(Tenant).where(Tenant.id == tenant_id))
-        return result.scalar_one_or_none()
+__all__ = [
+    "BaseRepository",
+    "ProductRepository",
+    "CategoryRepository",
+    "SupplierRepository",
+    "InventoryMovementRepository",
+    "StockAlertRepository",
+    "UserRepository",
+]
