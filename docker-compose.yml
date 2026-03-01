@@ -53,6 +53,7 @@ services:
       REDIS_URL: redis://redis:6379/0
       ENVIRONMENT: ${ENVIRONMENT:-production}
       LOG_LEVEL: ${LOG_LEVEL:-info}
+      RUN_SEEDS: ${RUN_SEEDS:-true}
     ports:
       - "${APP_PORT:-8000}:8000"
     volumes:
