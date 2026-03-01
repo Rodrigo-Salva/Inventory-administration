@@ -15,10 +15,16 @@ done
 echo "✅ Database is ready!"
 
 # Run migrations
-echo "🔄 Running database migrations..."
+echo "⏫ Running database migrations..."
 alembic upgrade head
-
 echo "✅ Migrations complete!"
+
+# Run seeds
+if [ "$RUN_SEEDS" = "true" ]; then
+  echo "🌱 Running database seeds..."
+  python -m app.seeds.seed_data
+  echo "✅ Seeds complete!"
+fi
 
 # Start application
 echo "🎉 Starting FastAPI application..."
