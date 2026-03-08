@@ -10,4 +10,4 @@ dist/
 build/
 *.spec
 .env.docker
-.env.example
+.env.example__pycache__/
