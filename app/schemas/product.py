@@ -13,7 +13,7 @@ class ProductBase(BaseModel):
     price: Decimal = Field(..., gt=0)
     batch_id: Optional[int] = Field(None, gt=0)
     cost: Optional[Decimal] = Field(None, ge=0)
-    stock: int = Field(default=0, ge=0)
+    stock: int = Field(default=0)
     min_stock: int = Field(default=10, ge=0)
     max_stock: Optional[int] = Field(None, ge=0)
     weight: Optional[float] = Field(None, ge=0)
