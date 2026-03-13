@@ -177,7 +177,6 @@ class RemoveStockRequest(BaseModel):
     quantity: int = Field(..., gt=0)
     reference: Optional[str] = Field(None, max_length=100)
     notes: Optional[str] = None
-    allow_negative: bool = False
 
 
 class AdjustStockRequest(BaseModel):
