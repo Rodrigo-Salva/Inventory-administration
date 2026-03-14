@@ -7,6 +7,7 @@ class PaymentMethod(str, enum.Enum):
     CASH = "cash"
     CARD = "card"
     TRANSFER = "transfer"
+    CREDIT = "credit"
     OTHER = "other"
 
 class SaleStatus(str, enum.Enum):
@@ -24,6 +25,11 @@ class Sale(Base, TimestampMixin):
     cash_session_id = Column(Integer, ForeignKey("cash_sessions.id"), index=True, nullable=True)
     
     total_amount = Column(Numeric(12, 2), nullable=False, default=0)
+    
+    # Programa de Lealtad / Descuentos
+    redeemed_points = Column(Integer, default=0)
+    points_discount_amount = Column(Numeric(12, 2), default=0)
+    
     payment_method = Column(String(20), nullable=False, default=PaymentMethod.CASH)
     status = Column(String(20), nullable=False, default=SaleStatus.COMPLETED)
     notes = Column(Text, nullable=True)

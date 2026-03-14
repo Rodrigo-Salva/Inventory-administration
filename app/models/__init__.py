@@ -20,3 +20,6 @@ from .expense import Expense
 from .quote import Quote, QuoteItem, QuoteStatus
 from .cash_session import CashSession, CashSessionStatus
 from .expense import Expense, ExpenseCategory
+from .credit import Credit, CreditStatus
+from .payment import Payment
+from .loyalty import LoyaltyConfig, LoyaltyTransaction
