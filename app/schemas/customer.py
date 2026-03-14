@@ -1,4 +1,5 @@
 from typing import Optional
+from decimal import Decimal
 from pydantic import BaseModel, Field, EmailStr, field_validator
 from datetime import datetime
 
@@ -19,9 +20,12 @@ class CustomerBase(BaseModel):
     state: Optional[str] = Field(None, max_length=100, description="Estado/Provincia")
     country: Optional[str] = Field(None, max_length=100, description="País")
     
-    # Información adicional
     notes: Optional[str] = Field(None, description="Notas adicionales")
     is_active: bool = Field(default=True, description="Cliente activo")
+    
+    # Crédito
+    credit_limit: Decimal = Field(default=0.00, description="Límite de crédito disponible")
+    current_balance: Decimal = Field(default=0.00, description="Saldo deudor actual")
     
     @field_validator('name')
     @classmethod
@@ -52,6 +56,8 @@ class CustomerUpdate(BaseModel):
     
     notes: Optional[str] = None
     is_active: Optional[bool] = None
+    credit_limit: Optional[Decimal] = None
+    current_balance: Optional[Decimal] = None
     
     @field_validator('name')
     @classmethod
