@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Index, Text, Boolean
+from sqlalchemy import Column, Integer, String, ForeignKey, Index, Text, Boolean, Numeric
 from sqlalchemy.orm import relationship
 from .base import TimestampMixin, SoftDeleteMixin
 from .base import Base
@@ -31,6 +31,11 @@ class Customer(Base, TimestampMixin, SoftDeleteMixin):
     
     # Notas
     notes = Column(Text, nullable=True)
+    
+    # Crédito
+    credit_limit = Column(Numeric(12, 2), nullable=False, default=0.00)
+    current_balance = Column(Numeric(12, 2), nullable=False, default=0.00)
+    loyalty_points = Column(Integer, nullable=False, default=0)
     
     # Relaciones
     tenant = relationship("Tenant")

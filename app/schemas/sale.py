@@ -33,6 +33,7 @@ class SaleBase(BaseModel):
 class SaleCreate(SaleBase):
     items: List[SaleItemCreate]
     customer_id: Optional[int] = None
+    redeemed_points: Optional[int] = 0
 
 class SaleResponse(SaleBase):
     id: int
