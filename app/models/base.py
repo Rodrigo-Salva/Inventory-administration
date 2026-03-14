@@ -1,7 +1,7 @@
 from datetime import datetime
 from sqlalchemy import Column, Integer, DateTime, Boolean
 from sqlalchemy.orm import DeclarativeBase, declared_attr
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker, AsyncAttrs
 from typing import AsyncGenerator
 import os
 
@@ -14,7 +14,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with async_session() as session:
         yield session
 
-class Base(DeclarativeBase):
+class Base(AsyncAttrs, DeclarativeBase):
     pass
 
 class TimestampMixin:
