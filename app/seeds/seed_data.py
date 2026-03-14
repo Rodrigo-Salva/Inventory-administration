@@ -25,20 +25,20 @@ from app.seeds.data.products import PRODUCTS
 
 async def clean_database(engine, session: AsyncSession):
     """Limpia todos los datos de la base de datos recreando las tablas"""
-    print("🗑️  Limpiando base de datos (recreando tablas)...")
+    print("  Limpiando base de datos (recreando tablas)...")
     
     async with engine.begin() as conn:
-        # Importante: Base.metadata necesita que todos los modelos estén cargados
+        # Importante: Base.metadata necesita que todos los modelos estn cargados
         # lo cual ya ocurre arriba con los imports
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
     
-    print("✅ Base de datos recreada exitosamente")
+    print(" Base de datos recreada exitosamente")
 
 
 async def create_tenant_and_user(session: AsyncSession):
     """Crea el tenant y usuario demo si no existen"""
-    print("\n👤 Verificando tenant y usuario...")
+    print("\n Verificando tenant y usuario...")
     
     # Verificar si el usuario ya existe
     from sqlalchemy import select
@@ -46,7 +46,7 @@ async def create_tenant_and_user(session: AsyncSession):
     existing_user = result.scalar_one_or_none()
     
     if existing_user:
-        print(f"✅ Usuario demo ya existe: {existing_user.email}")
+        print(f" Usuario demo ya existe: {existing_user.email}")
         return existing_user.tenant_id
 
     # Crear tenant
@@ -68,26 +68,26 @@ async def create_tenant_and_user(session: AsyncSession):
     session.add(user)
     await session.commit()
     
-    print(f"✅ Tenant creado: {tenant.name} (ID: {tenant.id})")
-    print(f"✅ Usuario creado: {user.email} / password: demo123")
+    print(f"OK Tenant creado: {tenant.name} (ID: {tenant.id})")
+    print(f"OK Usuario creado: {user.email} / password: demo123")
     
     return tenant.id
 
 
 async def create_categories(session: AsyncSession, tenant_id: int):
-    """Crea las categorías jerárquicas"""
-    print("\n📁 Creando categorías...")
+    """Crea las categoras jerrquicas"""
+    print("\n[INFO] Creando categoras...")
     
     category_map = {}  # code -> Category object
     
-    # Primera pasada: crear categorías raíz
+    # Primera pasada: crear categoras raz
     for cat_data in CATEGORIES:
         if cat_data["parent_code"] is None:
             # Verificar si ya existe
             from sqlalchemy import select
             res = await session.execute(select(Category).where(Category.code == cat_data["code"]))
-            if res.scalar_one_or_none():
-                category = res.scalar_one()
+            category = res.scalar_one_or_none()
+            if category:
                 category_map[cat_data["code"]] = category
                 print(f"  - {cat_data['name']} (ya existe)")
                 continue
@@ -102,16 +102,16 @@ async def create_categories(session: AsyncSession, tenant_id: int):
             session.add(category)
             await session.flush()
             category_map[cat_data["code"]] = category
-            print(f"  ✓ {category.name} ({category.code})")
+            print(f"   {category.name} ({category.code})")
     
-    # Segunda pasada: crear categorías con padre
+    # Segunda pasada: crear categoras con padre
     for cat_data in CATEGORIES:
         if cat_data["parent_code"] is not None:
             # Verificar si ya existe
             from sqlalchemy import select
             res = await session.execute(select(Category).where(Category.code == cat_data["code"]))
-            if res.scalar_one_or_none():
-                category = res.scalar_one()
+            category = res.scalar_one_or_none()
+            if category:
                 category_map[cat_data["code"]] = category
                 print(f"    - {cat_data['name']} (ya existe)")
                 continue
@@ -129,17 +129,17 @@ async def create_categories(session: AsyncSession, tenant_id: int):
                 session.add(category)
                 await session.flush()
                 category_map[cat_data["code"]] = category
-                print(f"    ✓ {category.name} ({category.code}) -> {parent.name}")
+                print(f"    OK {category.name} ({category.code}) -> {parent.name}")
     
     await session.commit()
-    print(f"✅ {len(category_map)} categorías creadas")
+    print(f"OK {len(category_map)} categorias creadas")
     
     return category_map
 
 
 async def create_suppliers(session: AsyncSession, tenant_id: int):
     """Crea los proveedores"""
-    print("\n🏢 Creando proveedores...")
+    print("\nCreando proveedores...")
     
     supplier_map = {}  # code -> Supplier object
     
@@ -147,8 +147,9 @@ async def create_suppliers(session: AsyncSession, tenant_id: int):
         # Verificar si ya existe
         from sqlalchemy import select
         res = await session.execute(select(Supplier).where(Supplier.code == sup_data["code"]))
-        if res.scalar_one_or_none():
-            supplier_map[sup_data["code"]] = res.scalar_one()
+        supplier = res.scalar_one_or_none()
+        if supplier:
+            supplier_map[sup_data["code"]] = supplier
             print(f"  - {sup_data['name']} (ya existe)")
             continue
 
@@ -173,29 +174,29 @@ async def create_suppliers(session: AsyncSession, tenant_id: int):
         session.add(supplier)
         await session.flush()
         supplier_map[sup_data["code"]] = supplier
-        print(f"  ✓ {supplier.name} ({supplier.code})")
+        print(f"   {supplier.name} ({supplier.code})")
     
     await session.commit()
-    print(f"✅ {len(supplier_map)} proveedores creados")
+    print(f" {len(supplier_map)} proveedores creados")
     
     return supplier_map
 
 
 async def create_roles_and_permissions(session: AsyncSession, tenant_id: int):
     """Crea roles y permisos por defecto"""
-    print("\n🔐 Creando roles y permisos...")
+    print("\n[INFO] Creando roles y permisos...")
     
     # 1. Definir permisos base
     permissions_data = [
         # Dashboard
         {"name": "Ver Dashboard", "codename": "dashboard:view", "module": "admin"},
 
-        # Productos y Categorías
+        # Productos y Categoras
         {"name": "Ver Productos", "codename": "products:view", "module": "inventory"},
         {"name": "Crear Productos", "codename": "products:create", "module": "inventory"},
         {"name": "Editar Productos", "codename": "products:edit", "module": "inventory"},
         {"name": "Eliminar Productos", "codename": "products:delete", "module": "inventory"},
-        {"name": "Ver Categorías", "codename": "categories:view", "module": "inventory"},
+        {"name": "Ver Categoras", "codename": "categories:view", "module": "inventory"},
         
         # Proveedores y Compras
         {"name": "Ver Proveedores", "codename": "suppliers:view", "module": "inventory"},
@@ -241,15 +242,26 @@ async def create_roles_and_permissions(session: AsyncSession, tenant_id: int):
         {"name": "Ver Usuarios", "codename": "users:view", "module": "admin"},
         {"name": "Ver Roles", "codename": "roles:view", "module": "admin"},
         {"name": "Gestionar Roles", "codename": "roles:manage", "module": "admin"},
-        {"name": "Configuración", "codename": "settings:manage", "module": "admin"},
+        {"name": "Configuracion", "codename": "settings:manage", "module": "admin"},
 
         # Reportes
         {"name": "Ver Reportes", "codename": "reports:view", "module": "admin"},
 
         # Traslados
         {"name": "Ver Traslados", "codename": "transfers:view", "module": "inventory"},
+        # Fidelizacin (Lealtad)
+        {"name": "Ver Configuracin Lealtad", "codename": "loyalty:config_view", "module": "sales"},
+        {"name": "Editar Configuracin Lealtad", "codename": "loyalty:config_edit", "module": "sales"},
+        {"name": "Ver Historial Puntos", "codename": "loyalty:history_view", "module": "sales"},
+        {"name": "Ajustar Puntos Manual", "codename": "loyalty:adjust", "module": "sales"},
         {"name": "Crear Traslados", "codename": "transfers:create", "module": "inventory"},
         {"name": "Gestionar Traslados", "codename": "transfers:manage", "module": "inventory"},
+
+        # Cuentas por Cobrar (Crditos)
+        {"name": "Ver Crditos", "codename": "credits:view", "module": "sales"},
+        {"name": "Gestionar Crditos", "codename": "credits:manage", "module": "sales"},
+        {"name": "Ver Pagos de Crdito", "codename": "payments:view", "module": "sales"},
+        {"name": "Registrar Pagos de Crdito", "codename": "payments:create", "module": "sales"},
     ]
     
     # Crear todos los permisos
@@ -262,7 +274,7 @@ async def create_roles_and_permissions(session: AsyncSession, tenant_id: int):
             perm = Permission(**p_data)
             session.add(perm)
             await session.flush()
-            print(f"  ✓ Permiso: {perm.codename}")
+            print(f"  OK Permiso: {perm.codename}")
         all_perms[p_data["codename"]] = perm
     
     # 2. Definir Roles y sus permisos
@@ -288,20 +300,29 @@ async def create_roles_and_permissions(session: AsyncSession, tenant_id: int):
                 "sales:view", "sales:pos", "sales:create",
                 "customers:view", "customers:create",
                 "transfers:view", "transfers:create", "transfers:manage",
-                "branches:view", "users:view"
+                "branches:view", "users:view",
+                "credits:view", "credits:manage", "payments:view", "payments:create",
+                "loyalty:config_view", "loyalty:config_edit", "loyalty:history_view", "loyalty:adjust"
             ]
         },
         "SELLER": {
             "description": "Vendedor / Punto de Venta",
             "is_system": True,
-            "permissions": ["products:view", "batches:view", "inventory:view", "quotes:view", "quotes:create", "sales:pos"]
+            "permissions": [
+                "products:view", "batches:view", "inventory:view", "quotes:view", "quotes:create", "sales:pos",
+                "loyalty:history_view"
+            ]
         }
     }
     
     # Crear Roles y asignar permisos
+    from sqlalchemy.orm import selectinload
     created_roles = {}
     for role_name, config in roles_config.items():
-        res = await session.execute(select(Role).where(Role.tenant_id == tenant_id, Role.name == role_name))
+        res = await session.execute(
+            select(Role).where(Role.tenant_id == tenant_id, Role.name == role_name)
+            .options(selectinload(Role.permissions))
+        )
         role = res.scalar_one_or_none()
         if not role:
             role = Role(
@@ -312,14 +333,17 @@ async def create_roles_and_permissions(session: AsyncSession, tenant_id: int):
             )
             session.add(role)
             await session.flush()
-            print(f"  ✓ Rol creado: {role.name}")
+            print(f"  OK Rol creado: {role.name}")
         
-        # Limpiar y re-asignar permisos para asegurar que están sincronizados
+        # Cargar permisos de forma explicita para evitar lazy loading
+        await role.awaitable_attrs.permissions
+        
+        # Limpiar y re-asignar permisos para asegurar que estn sincronizados
         role.permissions = [all_perms[p_code] for p_code in config["permissions"]]
         created_roles[role_name] = role
         
     await session.commit()
-    print("✅ Roles y permisos sincronizados")
+    print("OK Roles y permisos sincronizados")
     return created_roles
 
 async def create_products(
@@ -329,15 +353,16 @@ async def create_products(
     supplier_map: dict
 ):
     """Crea los productos"""
-    print("\n📦 Creando productos...")
+    print("\n[INFO] Creando productos...")
     
     product_count = 0
     
     for prod_data in PRODUCTS:
         # Verificar si ya existe
         from sqlalchemy import select
-        res = await session.execute(select(Product).where(Product.sku == prod_data["sku"]))
-        if res.scalar_one_or_none():
+        res = await session.execute(select(Product).where(Product.barcode == prod_data["barcode"]))
+        product = res.scalar_one_or_none()
+        if product:
             print(f"  - {prod_data['name']} (ya existe)")
             continue
 
@@ -345,7 +370,7 @@ async def create_products(
         supplier = supplier_map.get(prod_data["supplier_code"])
         
         if not category or not supplier:
-            print(f"  ⚠️  Saltando {prod_data['name']}: categoría o proveedor no encontrado")
+            print(f"    Saltando {prod_data['name']}: categora o proveedor no encontrado")
             continue
         
         product = Product(
@@ -365,15 +390,15 @@ async def create_products(
         )
         session.add(product)
         product_count += 1
-        print(f"  ✓ {product.name} (Stock: {product.stock})")
+        print(f"   {product.name} (Stock: {product.stock})")
     
     await session.commit()
-    print(f"✅ {product_count} productos creados")
+    print(f" {product_count} productos creados")
 
 
 async def run_seeds(clean: bool = False):
     """Ejecuta el proceso de seeds"""
-    print("🌱 Iniciando seeds de datos...\n")
+    print("[INFO] Iniciando seeds de datos...\n")
     
     # Crear engine y session
     engine = create_async_engine(settings.database_url, echo=False)
@@ -389,6 +414,23 @@ async def run_seeds(clean: bool = False):
             
             # Crear datos
             tenant_id = await create_tenant_and_user(session)
+            
+            # Configuracion de Lealtad inicial
+            from app.models.loyalty import LoyaltyConfig
+            from sqlalchemy import select
+            res = await session.execute(select(LoyaltyConfig).where(LoyaltyConfig.tenant_id == tenant_id))
+            if not res.scalar_one_or_none():
+                loyalty_config = LoyaltyConfig(
+                    tenant_id=tenant_id,
+                    points_per_amount=100.00, # 1 punto por cada $100
+                    amount_per_point=10.00,   # 1 punto vale $10
+                    is_active=True,
+                    min_redemption_points=10
+                )
+                session.add(loyalty_config)
+                await session.flush()
+                print(" OK Configuracion de lealtad creada")
+            
             roles = await create_roles_and_permissions(session, tenant_id)
             
             # Asignar rol ADMIN al usuario demo
@@ -404,17 +446,17 @@ async def run_seeds(clean: bool = False):
             await create_products(session, tenant_id, category_map, supplier_map)
             
             print("\n" + "="*60)
-            print("🎉 Seeds completados exitosamente!")
+            print(" Seeds completados exitosamente!")
             print("="*60)
-            print("\n📝 Credenciales de acceso:")
+            print("\n Credenciales de acceso:")
             print("   Email: admin@demo.com")
             print("   Password: demo123")
-            print("\n🌐 Accede a la aplicación:")
+            print("\n Accede a la aplicacin:")
             print("   http://localhost:8000/docs")
             print("="*60 + "\n")
             
         except Exception as e:
-            print(f"\n❌ Error durante seeds: {e}")
+            print(f"\n Error durante seeds: {e}")
             await session.rollback()
             raise
         finally:
